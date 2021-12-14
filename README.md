@@ -2,8 +2,9 @@
 
 Prerequisites - https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html#getting_started_prerequisites
 
-## Useful commands
+`cdk deploy --all`
 
+## Other Useful commands
  * `npm run build`   compile typescript to js
  * `npm run watch`   watch for changes and compile
  * `npm run test`    perform the jest unit tests

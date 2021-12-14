@@ -1,31 +1,45 @@
 import * as cdk from "@aws-cdk/core";
 import * as path from "path";
-import {AuthorizationType, GraphqlApi, MappingTemplate, PrimaryKey, Schema, Values} from "@aws-cdk/aws-appsync";
+import {
+  AuthorizationType,
+  GraphqlApi,
+  MappingTemplate,
+  PrimaryKey,
+  Schema,
+  UserPoolDefaultAction,
+  Values
+} from "@aws-cdk/aws-appsync";
 import {AttributeType, Table} from "@aws-cdk/aws-dynamodb";
+import {UserPool} from "@aws-cdk/aws-cognito";
 
-export class AppsyncDemoStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+export class AppSyncDemoApiStack extends cdk.Stack {
+  constructor(scope: cdk.Construct, id: string, userPool: UserPool, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const api = new GraphqlApi(this, "Api", {
-      name: "demo",
-      schema: Schema.fromAsset(path.join(__dirname, "schema.graphql")),
+    const api = new GraphqlApi(this, "AppSyncDemoApi", {
+      name: "AppSyncDemoApi",
+      schema: Schema.fromAsset(path.join(__dirname, "graphql", "schema.graphql")),
       authorizationConfig: {
         defaultAuthorization: {
           authorizationType: AuthorizationType.API_KEY,
+          // authorizationType: AuthorizationType.USER_POOL,
+          // userPoolConfig: {
+          //   userPool: userPool,
+          //   defaultAction: UserPoolDefaultAction.ALLOW
+          // }
         },
       },
       xrayEnabled: true,
     });
 
-    const demoTable = new Table(this, "DemoTable", {
+    const demoTable = new Table(this, "AppSyncDemoTable", {
       partitionKey: {
         name: "id",
         type: AttributeType.STRING,
       },
     });
 
-    const demoDS = api.addDynamoDbDataSource("demoDataSource", demoTable);
+    const demoDS = api.addDynamoDbDataSource("AppSyncDemoDynamoDataSource", demoTable);
 
     // Resolver for the Query "getDemos" that scans the DynamoDb table and returns the entire list.
     demoDS.createResolver({
@@ -46,7 +60,7 @@ export class AppsyncDemoStack extends cdk.Stack {
       responseMappingTemplate: MappingTemplate.dynamoDbResultItem(),
     });
 
-    const noneDataSource = api.addNoneDataSource("noneDataSource");
+    const noneDataSource = api.addNoneDataSource("AppSyncDemoNoneDataSource");
 
     noneDataSource.createResolver({
       typeName: "demo",
