@@ -1,17 +1,28 @@
 type Query {
-    getDemos: [ demo! ]
+    getArticles: [Article!]!
 }
 
 type Mutation {
-    addDemo(input: DemoInput!): demo
+    addArticle(input: ArticleInput!): Article!
+    addComment(input: CommentInput!): Comment!
 }
 
-type demo {
+type Article {
     id: String!
-    version: String!
-    currentDateTime: String!
+    text: String!
+    comments: [Comment!]!
 }
 
-input DemoInput {
-    version: String!
+type Comment {
+    id: ID!,
+    text: String!,
+}
+
+input ArticleInput {
+    text: String!
+}
+
+input CommentInput {
+    articleId: String!
+    text: String!
 }

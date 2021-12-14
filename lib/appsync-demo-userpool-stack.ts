@@ -1,4 +1,5 @@
 import * as cdk from "@aws-cdk/core";
+import {RemovalPolicy} from "@aws-cdk/core";
 import {UserPool} from "@aws-cdk/aws-cognito";
 
 export class AppsyncDemoUserpoolStack extends cdk.Stack {
@@ -11,7 +12,8 @@ export class AppsyncDemoUserpoolStack extends cdk.Stack {
         },
         signInAliases: {
             email: true
-        }
+        },
+        removalPolicy: RemovalPolicy.DESTROY
     });
 
     constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {

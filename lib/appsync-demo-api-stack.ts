@@ -1,12 +1,13 @@
 import * as cdk from "@aws-cdk/core";
+import {RemovalPolicy} from "@aws-cdk/core";
 import * as path from "path";
 import {
   AuthorizationType,
+  FieldLogLevel,
   GraphqlApi,
   MappingTemplate,
   PrimaryKey,
   Schema,
-  UserPoolDefaultAction,
   Values
 } from "@aws-cdk/aws-appsync";
 import {AttributeType, Table} from "@aws-cdk/aws-dynamodb";
@@ -30,29 +31,46 @@ export class AppSyncDemoApiStack extends cdk.Stack {
         },
       },
       xrayEnabled: true,
+      logConfig: {
+        fieldLogLevel: FieldLogLevel.ALL,
+        excludeVerboseContent: false
+      }
     });
 
-    const demoTable = new Table(this, "AppSyncDemoTable", {
+    const articleTable = new Table(this, "AppSyncDemoArticleTable", {
+      tableName: "AppSyncDemoArticleTable",
       partitionKey: {
         name: "id",
         type: AttributeType.STRING,
       },
+      removalPolicy: RemovalPolicy.DESTROY
     });
 
-    const demoDS = api.addDynamoDbDataSource("AppSyncDemoDynamoDataSource", demoTable);
+    const commentTable = new Table(this, "AppSyncDemoCommentTable", {
+      tableName: "AppSyncDemoCommentTable",
+      partitionKey: {
+        name: "articleId",
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: "id",
+        type: AttributeType.STRING,
+      },
+      removalPolicy: RemovalPolicy.DESTROY
+    });
 
-    // Resolver for the Query "getDemos" that scans the DynamoDb table and returns the entire list.
-    demoDS.createResolver({
+    const articleTableDataSource = api.addDynamoDbDataSource("AppSyncDemoArticleDataSource", articleTable);
+
+    articleTableDataSource.createResolver({
       typeName: "Query",
-      fieldName: "getDemos",
+      fieldName: "getArticles",
       requestMappingTemplate: MappingTemplate.dynamoDbScanTable(),
       responseMappingTemplate: MappingTemplate.dynamoDbResultList(),
     });
 
-    // Resolver for the Mutation "addDemo" that puts the item into the DynamoDb table.
-    demoDS.createResolver({
+    articleTableDataSource.createResolver({
       typeName: "Mutation",
-      fieldName: "addDemo",
+      fieldName: "addArticle",
       requestMappingTemplate: MappingTemplate.dynamoDbPutItem(
           PrimaryKey.partition("id").auto(),
           Values.projecting("input"),
@@ -60,13 +78,25 @@ export class AppSyncDemoApiStack extends cdk.Stack {
       responseMappingTemplate: MappingTemplate.dynamoDbResultItem(),
     });
 
-    const noneDataSource = api.addNoneDataSource("AppSyncDemoNoneDataSource");
+    const commentTableDataSource = api.addDynamoDbDataSource("AppSyncDemoCommentDataSource", commentTable);
 
-    noneDataSource.createResolver({
-      typeName: "demo",
-      fieldName: "currentDateTime",
-      requestMappingTemplate: MappingTemplate.fromFile(path.join(__dirname, "resolver-templates", "currentDateTime.request.vtl")),
-      responseMappingTemplate: MappingTemplate.fromFile(path.join(__dirname, "resolver-templates", "currentDateTime.response.vtl"))
-    })
+    commentTableDataSource.createResolver({
+      typeName: "Article",
+      fieldName: "comments",
+      requestMappingTemplate: MappingTemplate.fromFile(path.join(__dirname, "resolver-templates", "comments.request.vtl")),
+      responseMappingTemplate: MappingTemplate.dynamoDbResultList(),
+    });
+
+    commentTableDataSource.createResolver({
+      typeName: "Mutation",
+      fieldName: "addComment",
+      requestMappingTemplate: MappingTemplate.dynamoDbPutItem(
+          PrimaryKey
+              .partition("articleId").is("input.articleId")
+              .sort("id").auto(),
+          Values.projecting("input"),
+      ),
+      responseMappingTemplate: MappingTemplate.dynamoDbResultItem(),
+    });
   }
 }
