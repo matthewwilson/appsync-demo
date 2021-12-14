@@ -23,12 +23,12 @@ export class AppSyncDemoApiStack extends cdk.Stack {
       schema: Schema.fromAsset(path.join(__dirname, "graphql", "schema.graphql")),
       authorizationConfig: {
         defaultAuthorization: {
-          //authorizationType: AuthorizationType.API_KEY,
-          authorizationType: AuthorizationType.USER_POOL,
-          userPoolConfig: {
-            userPool: userPool,
-            defaultAction: UserPoolDefaultAction.ALLOW
-          }
+          authorizationType: AuthorizationType.API_KEY,
+          // authorizationType: AuthorizationType.USER_POOL,
+          // userPoolConfig: {
+          //   userPool: userPool,
+          //   defaultAction: UserPoolDefaultAction.ALLOW
+          // }
         },
       },
       xrayEnabled: true,
@@ -60,6 +60,8 @@ export class AppSyncDemoApiStack extends cdk.Stack {
       removalPolicy: RemovalPolicy.DESTROY
     });
 
+    /** ARTICLE RESOLVER **/
+
     const articleTableDataSource = api.addDynamoDbDataSource("AppSyncDemoArticleDataSource", articleTable);
 
     articleTableDataSource.createResolver({
@@ -78,6 +80,8 @@ export class AppSyncDemoApiStack extends cdk.Stack {
       ),
       responseMappingTemplate: MappingTemplate.dynamoDbResultItem(),
     });
+
+    /** COMMENT RESOLVERS **/
 
     const commentTableDataSource = api.addDynamoDbDataSource("AppSyncDemoCommentDataSource", commentTable);
 
@@ -99,6 +103,8 @@ export class AppSyncDemoApiStack extends cdk.Stack {
       ),
       responseMappingTemplate: MappingTemplate.dynamoDbResultItem(),
     });
+
+    /** PIPELINE RESOLVER **/
 
     const noneDataSource = api.addNoneDataSource("AppSyncDemoNoneDataSource")
 
