@@ -45,5 +45,14 @@ export class AppsyncDemoStack extends cdk.Stack {
       ),
       responseMappingTemplate: MappingTemplate.dynamoDbResultItem(),
     });
+
+    const noneDataSource = api.addNoneDataSource("noneDataSource");
+
+    noneDataSource.createResolver({
+      typeName: "demo",
+      fieldName: "currentDateTime",
+      requestMappingTemplate: MappingTemplate.fromFile(path.join(__dirname, "resolver-templates", "currentDateTime.request.vtl")),
+      responseMappingTemplate: MappingTemplate.fromFile(path.join(__dirname, "resolver-templates", "currentDateTime.response.vtl"))
+    })
   }
 }

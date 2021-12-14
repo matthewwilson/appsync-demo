@@ -9,6 +9,7 @@ type Mutation {
 type demo {
     id: String!
     version: String!
+    currentDateTime: String!
 }
 
 input DemoInput {
