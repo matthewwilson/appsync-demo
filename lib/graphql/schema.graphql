@@ -11,11 +11,17 @@ type Article {
     id: String!
     text: String!
     comments: [Comment!]!
+    pipeline: PipelineResult!
 }
 
 type Comment {
     id: ID!,
     text: String!,
+}
+
+type PipelineResult {
+    iso8601: String!
+    epochMilliSeconds: String!
 }
 
 input ArticleInput {

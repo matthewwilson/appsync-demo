@@ -2,12 +2,13 @@ import * as cdk from "@aws-cdk/core";
 import {RemovalPolicy} from "@aws-cdk/core";
 import * as path from "path";
 import {
+  AppsyncFunction,
   AuthorizationType,
   FieldLogLevel,
   GraphqlApi,
   MappingTemplate,
-  PrimaryKey,
-  Schema,
+  PrimaryKey, Resolver,
+  Schema, UserPoolDefaultAction,
   Values
 } from "@aws-cdk/aws-appsync";
 import {AttributeType, Table} from "@aws-cdk/aws-dynamodb";
@@ -22,12 +23,12 @@ export class AppSyncDemoApiStack extends cdk.Stack {
       schema: Schema.fromAsset(path.join(__dirname, "graphql", "schema.graphql")),
       authorizationConfig: {
         defaultAuthorization: {
-          authorizationType: AuthorizationType.API_KEY,
-          // authorizationType: AuthorizationType.USER_POOL,
-          // userPoolConfig: {
-          //   userPool: userPool,
-          //   defaultAction: UserPoolDefaultAction.ALLOW
-          // }
+          //authorizationType: AuthorizationType.API_KEY,
+          authorizationType: AuthorizationType.USER_POOL,
+          userPoolConfig: {
+            userPool: userPool,
+            defaultAction: UserPoolDefaultAction.ALLOW
+          }
         },
       },
       xrayEnabled: true,
@@ -97,6 +98,33 @@ export class AppSyncDemoApiStack extends cdk.Stack {
           Values.projecting("input"),
       ),
       responseMappingTemplate: MappingTemplate.dynamoDbResultItem(),
+    });
+
+    const noneDataSource = api.addNoneDataSource("AppSyncDemoNoneDataSource")
+
+    const firstAppSyncFunction = new AppsyncFunction(this, "AppSyncDemoFirstAppSyncFunction", {
+      name: 'AppSyncDemoFirstAppSyncFunction',
+      api,
+      dataSource: noneDataSource,
+      requestMappingTemplate: MappingTemplate.fromFile(path.join(__dirname, "resolver-templates", "pipeline", "firstFunction.request.vtl")),
+      responseMappingTemplate: MappingTemplate.fromFile(path.join(__dirname, "resolver-templates", "pipeline", "firstFunction.response.vtl")),
+    });
+
+    const secondAppSyncFunction = new AppsyncFunction(this, "AppSyncDemoSecondAppSyncFunction", {
+      name: 'AppSyncDemoSecondAppSyncFunction',
+      api,
+      dataSource: noneDataSource,
+      requestMappingTemplate: MappingTemplate.fromFile(path.join(__dirname, "resolver-templates", "pipeline", "secondFunction.request.vtl")),
+      responseMappingTemplate: MappingTemplate.fromFile(path.join(__dirname, "resolver-templates", "pipeline", "secondFunction.response.vtl")),
+    });
+
+    const pipelineResolver = new Resolver(this, 'AppSyncDemoPipelineResolver', {
+      api,
+      typeName: 'Article',
+      fieldName: 'pipeline',
+      requestMappingTemplate: MappingTemplate.fromFile(path.join(__dirname, "resolver-templates", "pipeline", "beforeRequest.vtl")),
+      pipelineConfig: [firstAppSyncFunction, secondAppSyncFunction],
+      responseMappingTemplate: MappingTemplate.fromFile(path.join(__dirname, "resolver-templates", "pipeline", "afterResponse.vtl")),
     });
   }
 }
