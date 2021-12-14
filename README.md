@@ -1,8 +1,6 @@
-# Welcome to your CDK TypeScript project!
+# AppSync Demo
 
-This is a blank project for TypeScript development with CDK.
-
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+Prerequisites - https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html#getting_started_prerequisites
 
 ## Useful commands
 
