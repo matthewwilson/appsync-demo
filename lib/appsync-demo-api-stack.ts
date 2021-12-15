@@ -7,8 +7,10 @@ import {
   FieldLogLevel,
   GraphqlApi,
   MappingTemplate,
-  PrimaryKey, Resolver,
-  Schema, UserPoolDefaultAction,
+  PrimaryKey,
+  Resolver,
+  Schema,
+  UserPoolDefaultAction,
   Values
 } from "@aws-cdk/aws-appsync";
 import {AttributeType, Table} from "@aws-cdk/aws-dynamodb";
